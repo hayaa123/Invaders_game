@@ -1,8 +1,8 @@
 const canvus = document.querySelector('canvas')
 let c = canvus.getContext("2d")
-
-canvus.width = innerWidth -10
-canvus.height = innerHeight -10
+let scoreEl = document.getElementById("score-el")
+canvus.width = 1024
+canvus.height = 576
 
 class Player {
     constructor() {
@@ -13,7 +13,7 @@ class Player {
 
 
         this.rotation = 0 
-
+        this.opacity = 1
         const image = new Image()
         image.src = "./assets/spaceship.png"
         image.onload = () => {
@@ -38,6 +38,7 @@ class Player {
         // c.fillRect(this.position.x,this.position.y,this.width,this.height)
         if (this.image) { // we put this if statment because when we do onload this will run before the attributes get added 
             c.save()
+            c.globalAlpha = this.opacity
             c.translate(
                 this.position.x +this.width /2,
                 this.position.y +this.height/2      
@@ -84,6 +85,7 @@ class Projectile {
     }
 
     update(){
+   
         this.draw()
         this.position.x += this.velocity.x
         this.position.y += this.velocity.y
@@ -91,7 +93,7 @@ class Projectile {
 }
 
 class Particle {
-    constructor(position , velocity,raduis,color){
+    constructor(position , velocity,raduis,color,fade=true){
         this.position = position,
         this.velocity =velocity,
 
@@ -99,6 +101,7 @@ class Particle {
         this.raduis =raduis
         this.color = color 
         this.opacity = 1
+        this.fade = fade
     }
     draw (){
         c.save()
@@ -115,7 +118,10 @@ class Particle {
         this.draw()
         this.position.x += this.velocity.x
         this.position.y += this.velocity.y
-        this.opacity  -= 0.01
+
+        if (this.fade){
+            this.opacity  -= 0.01
+        }
     }
 }
 
@@ -239,8 +245,9 @@ class Grid {
         if (this.position.x +this.width >= canvus.width){
             this.velocity.x = -this.velocity.x
             this.velocity.y = 30
-        }        
+        }
         if (this.position.x <= 0){
+            this.velocity.y = 30
             this.velocity.x = -this.velocity.x
         }
     
@@ -254,8 +261,13 @@ let projectiles = []
 let grid = []
 let invaderProjectiles =[]
 let particles =[]
+let game = {
+    over :false ,
+    active :true 
+}
 
-// let invader = 
+let score = 0
+
 
 player1.draw()
 
@@ -284,6 +296,25 @@ const keys ={
 
 let frames = 0
 
+for (let i =0; i<30; i++){
+
+    particles.push(new Particle(
+        {
+            x: Math.random()*canvus.width,
+            y: Math.random()*canvus.height
+        },
+        {
+            x:0,
+            y:0.3 
+        },
+        Math.random()*2,
+        'white',
+        false
+    ))
+
+}
+
+
 let createParticles =(obj,color)=>{
     for (let i =0; i<15; i++){
 
@@ -305,11 +336,28 @@ let createParticles =(obj,color)=>{
 
 
 function animate() { // this do somthing like infinite loopp but without affecting memory 
+    if (!game.active) {
+        c.save()
+        c.globalAlpha = 0.7
+        c.fillStyle="black"
+        c.fillRect(0,0,canvus.width,canvus.height)
+        c.restore()
+        
+        c.font = "50px Arial";
+        c.fillText("Game Over", canvus.width/2 -150  , canvus.height/2 -30 );        
+        return 
+    }    
     requestAnimationFrame(animate)
     c.fillStyle = "black"
     c.fillRect(0, 0, canvus.width, canvus.height)
     player1.update()
     particles.forEach((particle,par_index) =>{
+        if (particle.position.y - particle.raduis >=canvus.height){
+            particle.position.y = -particle.raduis
+            particle.position.x = Math.random()*canvus.width
+        }
+        
+        
         if (particle.opacity <= 0){
             particles.splice(par_index,1)
         }else{
@@ -336,6 +384,14 @@ function animate() { // this do somthing like infinite loopp but without affecti
             && 
             invaderProjectile.position.y< player1.position.y +player1.height
             ){
+                setTimeout(()=>{
+                    invaderProjectiles.splice(ip_index,1)
+                    player1.opacity = 0
+                    game.over = true
+                },0)
+                setTimeout(() => {
+                    game.active = false
+                },2000);
                 console.log("you lose");
                 createParticles(player1,'white')
             }
@@ -387,9 +443,8 @@ function animate() { // this do somthing like infinite loopp but without affecti
                         )
                         if (invaderFound && projectileFound){
                             createParticles(invader)
-              
-                            
-
+                            score +=100
+                            scoreEl.innerHTML = score
                             grid.invaders. splice(i_index,1)
                             projectiles.splice(p_index,1)
                             if (grid.invaders.length >0 ){
@@ -460,6 +515,7 @@ animate()
 // ArrowUp
 // ArrowLeft
 addEventListener("keydown",(e)=>{
+    if (game.over) return
     switch (e.key){
         case "ArrowLeft" :
             keys.ArrowLeft.pressed = true
@@ -496,7 +552,6 @@ addEventListener("keyup",(e)=>{
                 keys.ArrowDown.pressed = false
                 break
         case " ":
-            console.log('space');
             break
     }
 })
