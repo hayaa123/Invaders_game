@@ -1,6 +1,8 @@
 const canvus = document.querySelector('canvas')
 let c = canvus.getContext("2d")
 let scoreEl = document.getElementById("score-el")
+let powerElFill = document.getElementById('power-el-fill')
+
 canvus.width = 1024
 canvus.height = 576
 
@@ -69,12 +71,12 @@ class Player {
 }
 
 class Projectile {
-    constructor(position , velocity){
+    constructor(position , velocity,raduis=3,type="normal"){
         this.position = position,
         this.velocity =velocity,
 
-
-        this.raduis = 3
+        this.type = type
+        this.raduis = raduis
     }
     draw (){
         c.beginPath()
@@ -125,8 +127,6 @@ class Particle {
     }
 }
 
-
-
 class InvaderProjectile {
     constructor(position , velocity){
         this.position = position,
@@ -148,8 +148,6 @@ class InvaderProjectile {
 
     
 }
-
-
 
 class Invader {
     constructor(position) {
@@ -267,6 +265,10 @@ let game = {
 }
 
 let score = 0
+let power = 0
+
+
+
 
 
 player1.draw()
@@ -290,6 +292,10 @@ const keys ={
     },
     space : {
         pressed:false
+    },
+    alt:{
+        pressed:false
+
     }
     }
 
@@ -444,9 +450,18 @@ function animate() { // this do somthing like infinite loopp but without affecti
                         if (invaderFound && projectileFound){
                             createParticles(invader)
                             score +=100
+                            power +=10
                             scoreEl.innerHTML = score
+                            if (power <= 100){
+                                powerElFill.style.width = `${power}px`
+                            }
+                            if (power>=100)  {
+                                powerElFill.style.boxShadow = "0px 0px 20px yellow"
+                            }
                             grid.invaders. splice(i_index,1)
-                            projectiles.splice(p_index,1)
+                            if (projectile.type =="normal"){
+                                projectiles.splice(p_index,1)
+                            }
                             if (grid.invaders.length >0 ){
                                 let firstInvader = grid.invaders[0]
                                 let lastInvader = grid.invaders[grid.invaders.length -1]
@@ -516,6 +531,7 @@ animate()
 // ArrowLeft
 addEventListener("keydown",(e)=>{
     if (game.over) return
+    console.log(e.key);
     switch (e.key){
         case "ArrowLeft" :
             keys.ArrowLeft.pressed = true
@@ -534,6 +550,15 @@ addEventListener("keydown",(e)=>{
                 projectiles.push(new Projectile({x:player1.position.x+ 0.5*player1.width ,y:player1.position.y},{x:0,y:-10}))
 
             break
+        case "Shift":
+                if (power >= 100 ){
+                    projectiles.push(new Projectile({x:player1.position.x+ 0.5*player1.width ,y:player1.position.y},{x:0,y:-10},10,"powerUp"))
+                    power = 0
+                    powerElFill.style.width = 0
+                    powerElFill.style.boxShadow = "0px 0px 10px red"
+                }
+
+        
     }
 })
 
@@ -552,6 +577,8 @@ addEventListener("keyup",(e)=>{
                 keys.ArrowDown.pressed = false
                 break
         case " ":
+            break
+        case "Shift":
             break
     }
 })
