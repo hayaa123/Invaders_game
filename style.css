@@ -5,6 +5,7 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+    background-color: black;
 }
 p{
     margin: 0;
@@ -20,4 +21,41 @@ div{
     top: 10px;
     font-family: sans-serif;
     font-size: 14px;
+}
+.power {
+    position: absolute;
+    z-index: 10;
+    color:white;
+    top:10px;
+    right: 10px;
+    display: flex;
+}
+#power-el{
+    position: relative;
+    display: inline-block;
+    background-color: gray;
+    width: 100px;
+    height: 20px;
+
+}
+#power-el-fill{
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 12;
+    width: 0px;
+    height: 20px;
+    background-color: red;
+    box-shadow: 0px 0px 10px red
+    
+}
+
+.key {
+    color: gray;
+}
+.kyes{
+    position: fixed;
+    color:white;
+    bottom: 10px;
 }
